@@ -1,9 +1,21 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh-Hans">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>⬡ BSC Chain Music</title>
+  <script>
+    try {
+      var _l = localStorage.getItem("song-of-chain-lang");
+      if (_l === "en") {
+        document.documentElement.lang = "en";
+        document.title = "⬡ BSC Chain Music";
+      } else {
+        document.documentElement.lang = "zh-Hans";
+        document.title = "⬡ BSC 链上音乐";
+      }
+    } catch (e) {}
+  </script>
   <style>
     *, *::before, *::after { box-sizing: border-box; }
     html, body { margin: 0; padding: 0; background: #060b14; }
@@ -55,14 +67,14 @@ const nextHttp = () => {
 };
 
 const SCALES = {
-  pentatonic:  { notes: ["C","D","E","G","A"],               label: "五声"   },
-  blues:       { notes: ["C","Eb","F","Gb","G","Bb"],         label: "蓝调"   },
-  major:       { notes: ["C","D","E","F","G","A","B"],        label: "大调"   },
-  minor:       { notes: ["C","D","Eb","F","G","Ab","Bb"],     label: "小调"   },
-  dorian:      { notes: ["C","D","Eb","F","G","A","Bb"],      label: "多利亚" },
-  mixolydian:  { notes: ["C","D","E","F","G","A","Bb"],       label: "混合"   },
-  japanese:    { notes: ["C","Db","F","G","Ab"],              label: "日本"   },
-  wholetone:   { notes: ["C","D","E","Gb","Ab","Bb"],         label: "全音"   },
+  pentatonic:  { notes: ["C","D","E","G","A"] },
+  blues:       { notes: ["C","Eb","F","Gb","G","Bb"] },
+  major:       { notes: ["C","D","E","F","G","A","B"] },
+  minor:       { notes: ["C","D","Eb","F","G","Ab","Bb"] },
+  dorian:      { notes: ["C","D","Eb","F","G","A","Bb"] },
+  mixolydian:  { notes: ["C","D","E","F","G","A","Bb"] },
+  japanese:    { notes: ["C","Db","F","G","Ab"] },
+  wholetone:   { notes: ["C","D","E","Gb","Ab","Bb"] },
 };
 
 const NHEX = {
@@ -74,12 +86,123 @@ const NHEX = {
 const ncolor = n => NHEX[n.replace(/[#\d]/g, "")] || "#aaa";
 
 const TRACKS = [
-  { id:"transfer", label:"Transfer", color:"#00d4ff", emoji:"💸", desc:"ETH/BNB 转账" },
-  { id:"defi",     label:"DeFi/NFT", color:"#ffd700", emoji:"🔮", desc:"合约调用"     },
-  { id:"deploy",   label:"Deploy",   color:"#ff6b6b", emoji:"🚀", desc:"合约部署"     },
-  { id:"ambient",  label:"Ambient",  color:"#a29bfe", emoji:"🌊", desc:"环境声层"     },
-  { id:"txbeat",   label:"TX Beat",  color:"#ff9f43", emoji:"🥁", desc:"交易数量节拍" },
+  { id:"transfer", color:"#00d4ff", emoji:"💸" },
+  { id:"defi",     color:"#ffd700", emoji:"🔮" },
+  { id:"deploy",   color:"#ff6b6b", emoji:"🚀" },
+  { id:"ambient",  color:"#a29bfe", emoji:"🌊" },
+  { id:"txbeat",   color:"#ff9f43", emoji:"🥁" },
 ];
+
+/* ── i18n: UI copy (zh / en) ── */
+const I18N = {
+  zh: {
+    docTitle: "⬡ BSC 链上音乐",
+    headerChain: "BNB SMART CHAIN",
+    headerTitle: "⬡ CHAIN MUSIC ⬡",
+    headerTagline: "每个区块 · 一组和声 · 多轨 · 实时与回放",
+    langLabel: "语言",
+    scales: {
+      pentatonic: "五声", blues: "蓝调", major: "大调", minor: "小调",
+      dorian: "多利亚", mixolydian: "混合", japanese: "日本", wholetone: "全音",
+    },
+    tracks: {
+      transfer: { label: "转账", desc: "ETH/BNB 转账" },
+      defi:     { label: "DeFi/NFT", desc: "合约调用" },
+      deploy:   { label: "部署", desc: "合约部署" },
+      ambient:  { label: "环境", desc: "环境声层" },
+      txbeat:   { label: "交易节拍", desc: "交易数量节拍" },
+    },
+    nrPlaceholder: "NodeReal API Key（留空使用 PublicNode 免费节点）",
+    nrHttpPool: "公共节点池（{n} 个，自动轮换）",
+    nrHint: "nodereal.io 免费申请，获得稳定专属节点",
+    modeLive: "实时监听",
+    modeReplay: "历史回放",
+    replayConfig: "回放设置",
+    shortcuts: "快捷",
+    preset2m: "2 分钟", preset5m: "5 分钟", preset15m: "15 分钟", preset30m: "30 分钟", preset1h: "1 小时", preset6h: "6 小时",
+    blockStart: "起始区块", blockEnd: "结束区块", blockPlaceholder: "区块号…",
+    replaySpeed: "回放速度", speedSuffix: "速",
+    loopModeLabel: "模式",
+    patternLoop: "循环", patternOnce: "单次",
+    control: "控制", resume: "继续", pause: "暂停",
+    latestBlock: "最新区块", blocksTotal: "共 {n} 个区块", hoursApprox: "约 {h} 小时",
+    phaseFetching: "正在下载区块…", phaseProcessing: "正在处理音符…", phasePlaying: "正在播放",
+    statBlock: "区块", statTx: "TX", statTransfer: "Transfer", statDefi: "DeFi", statDeploy: "Deploy", statGas: "Gas%", statBpm: "BPM", statConn: "连接",
+    connWs: "{p} WS ●", connPoll: "{p} Poll ●", connDownload: "下载", connProcess: "处理", connPlay: "播放", connDone: "完成",
+    mixer: "轨道混音",
+    play: "播放", stop: "停止",
+    rhythm: "节奏", everyBlock: "每块", everyNBlocks: "每 {n} 块", secPerNote: " 秒/音",
+    sessionPlayed: "已播 {n} 个区块", sessionTx: "TX", sessionDefi: "DeFi", sessionDeploy: "部署",
+    sessionReplay: "会话回放", sessionRecorded: "已录制", sessionBlocks: "个区块", sessionMinutes: "约 {m} 分钟",
+    sessionSpeed: "速度", sessionReplayThis: "回放本次", sessionLooping: "循环中", sessionPaused: "已暂停",
+    waitingBlocks: "— 等待区块 —",
+    legendTitle: "映射规则",
+    legendL1: "💸 转账数 → 旋律音高（三角波） · 🔮 DeFi 调用数 → 和声（锯齿波）",
+    legendL2: "🚀 合约部署数 → 金属打击 · 🌊 Gas 利用率 → 环境长音（正弦）",
+    legendL3: "🥁 交易总数 → 底鼓：交易越多，底鼓越重、越低沉",
+    legendL4: "🎵 声部引导：每次最多移 2 阶；DeFi 与转账形成三度关系",
+    legendL5: "🎛 BPM 随出块节奏 · 📡 WSS 实时 + 轮询兜底 · ⏮ 历史回放三阶段预加载",
+    errInvalidRange: "请输入有效区块范围（起始 < 结束）",
+    errPoll: "轮询失败：{msg}",
+    errAllNodes: "所有节点请求失败 — {detail}",
+  },
+  en: {
+    docTitle: "⬡ BSC Chain Music",
+    headerChain: "BNB SMART CHAIN",
+    headerTitle: "⬡ CHAIN MUSIC ⬡",
+    headerTagline: "EVERY BLOCK · A CHORD · MULTI-TRACK · LIVE & REPLAY",
+    langLabel: "Language",
+    scales: {
+      pentatonic: "Pentatonic", blues: "Blues", major: "Major", minor: "Minor",
+      dorian: "Dorian", mixolydian: "Mixolydian", japanese: "Japanese", wholetone: "Whole tone",
+    },
+    tracks: {
+      transfer: { label: "Transfer", desc: "ETH/BNB transfers" },
+      defi:     { label: "DeFi/NFT", desc: "Contract calls" },
+      deploy:   { label: "Deploy", desc: "Contract deploys" },
+      ambient:  { label: "Ambient", desc: "Ambient pad" },
+      txbeat:   { label: "TX Beat", desc: "Kick from tx volume" },
+    },
+    nrPlaceholder: "NodeReal API key (leave empty for free PublicNode)",
+    nrHttpPool: "Public pool ({n} endpoints, round-robin)",
+    nrHint: "Get a free key at nodereal.io for a dedicated endpoint",
+    modeLive: "Live",
+    modeReplay: "Replay",
+    replayConfig: "REPLAY CONFIGURATION",
+    shortcuts: "Presets",
+    preset2m: "2 min", preset5m: "5 min", preset15m: "15 min", preset30m: "30 min", preset1h: "1 h", preset6h: "6 h",
+    blockStart: "Start block", blockEnd: "End block", blockPlaceholder: "Block #…",
+    replaySpeed: "Speed", speedSuffix: "×",
+    loopModeLabel: "Mode",
+    patternLoop: "Loop", patternOnce: "Once",
+    control: "Ctrl", resume: "Resume", pause: "Pause",
+    latestBlock: "Latest", blocksTotal: "{n} blocks", hoursApprox: "~{h} h",
+    phaseFetching: "Fetching blocks…", phaseProcessing: "Building notes…", phasePlaying: "Playing",
+    statBlock: "Block", statTx: "TX", statTransfer: "Transfer", statDefi: "DeFi", statDeploy: "Deploy", statGas: "Gas%", statBpm: "BPM", statConn: "Conn",
+    connWs: "{p} WS ●", connPoll: "{p} Poll ●", connDownload: "DL", connProcess: "Proc", connPlay: "Play", connDone: "Done",
+    mixer: "TRACK MIXER",
+    play: "PLAY", stop: "STOP",
+    rhythm: "Rhythm", everyBlock: "Each", everyNBlocks: "Every {n}", secPerNote: " s/note",
+    sessionPlayed: "{n} blocks played", sessionTx: "TX", sessionDefi: "DeFi", sessionDeploy: "Deploys",
+    sessionReplay: "SESSION REPLAY", sessionRecorded: "Recorded", sessionBlocks: "blocks", sessionMinutes: "~{m} min",
+    sessionSpeed: "Speed", sessionReplayThis: "Replay session", sessionLooping: "looping", sessionPaused: "paused",
+    waitingBlocks: "— waiting for blocks —",
+    legendTitle: "MAPPING RULES",
+    legendL1: "💸 Transfers → melody (triangle) · 🔮 DeFi calls → harmony (saw)",
+    legendL2: "🚀 Deploys → metal hit · 🌊 Gas usage → ambient sine pad",
+    legendL3: "🥁 Total TX → kick: busier blocks = heavier, lower kick",
+    legendL4: "🎵 Voice-leading: ≤2 scale steps; DeFi is a third above transfer",
+    legendL5: "🎛 BPM follows block time · 📡 WebSocket + poll fallback · ⏮ 3-phase replay",
+    errInvalidRange: "Enter a valid range (start < end)",
+    errPoll: "Poll failed: {msg}",
+    errAllNodes: "All nodes failed — {detail}",
+  },
+};
+
+function fmt(str, vars) {
+  if (!str) return "";
+  return str.replace(/\{(\w+)\}/g, (_, k) => (vars[k] != null ? String(vars[k]) : `{${k}}`));
+}
 
 const BPH        = 8000;  // BSC ~450ms/block → ~8000 blocks/hour
 const BLOCK_MS   = 450;   // expected ms between blocks (for poll interval)
@@ -124,7 +247,10 @@ async function bscRPC(method, params, nodeRealHttp) {
       errors.push(`${url.split("/")[2]}: ${e.message}`);
     }
   }
-  throw new Error(`所有节点请求失败 — ${errors.slice(0, 2).join(" | ")}`);
+  const detail = errors.slice(0, 2).join(" | ");
+  const err = new Error("ALL_NODES_FAILED");
+  err.detail = detail;
+  throw err;
 }
 
 const fetchBlock   = (tag, http) => bscRPC("eth_getBlockByNumber", [tag, true],  http);
@@ -256,6 +382,11 @@ function BSCMusicPlayer() {
   const [err,      setErr]     = useState(null);
   const [latestN,  setLatestN] = useState(null);
 
+  const [lang, setLang] = useState(() => {
+    try { return localStorage.getItem("song-of-chain-lang") === "en" ? "en" : "zh"; }
+    catch { return "zh"; }
+  });
+
   // NodeReal config
   const [nrKey,    setNrKey]   = useState("");       // NodeReal API key
   const [showKey,  setShowKey] = useState(false);    // toggle key visibility
@@ -308,6 +439,7 @@ function BSCMusicPlayer() {
   const rSpeedR   = useRef(rSpeed);
   const nrKeyR    = useRef(nrKey);   // NodeReal key ref (for stable callbacks)
   const btimes    = useRef([]); // for adaptive BPM
+  const langRef   = useRef(lang);
 
   // Keep refs in sync
   useEffect(() => { modeR.current  = mode;   }, [mode]);
@@ -317,6 +449,13 @@ function BSCMusicPlayer() {
   useEffect(() => { rEndR.current   = rEnd;  }, [rEnd]);
   useEffect(() => { rSpeedR.current = rSpeed;}, [rSpeed]);
   useEffect(() => { nrKeyR.current  = nrKey; }, [nrKey]);
+  useEffect(() => { langRef.current = lang; }, [lang]);
+
+  useEffect(() => {
+    try { localStorage.setItem("song-of-chain-lang", lang); } catch (_) {}
+    document.documentElement.lang = lang === "zh" ? "zh-Hans" : "en";
+    document.title = I18N[lang].docTitle;
+  }, [lang]);
 
   const noteEveryR = useRef(noteEvery);
   useEffect(() => { noteEveryR.current = noteEvery; }, [noteEvery]);
@@ -525,7 +664,13 @@ function BSCMusicPlayer() {
         if (n === lastNR.current) return;
         lastNR.current = n;
         proc(b);
-      } catch (e) { setErr(`轮询失败: ${e.message}`); }
+      } catch (e) {
+        const L = I18N[langRef.current];
+        if (e.message === "ALL_NODES_FAILED" && e.detail != null)
+          setErr(fmt(L.errAllNodes, { detail: e.detail }));
+        else
+          setErr(fmt(L.errPoll, { msg: e.message }));
+      }
       finally { busy = false; }
     }, BLOCK_MS);   // poll at ~block rate (450ms)
   }, [proc]);
@@ -576,7 +721,7 @@ function BSCMusicPlayer() {
     const s = parseInt(rStartR.current);
     const e = parseInt(rEndR.current);
     if (!s || !e || s >= e) {
-      setErr("请输入有效的区块范围（起始 < 结束）");
+      setErr(I18N[langRef.current].errInvalidRange);
       setPlaying(false);
       return;
     }
@@ -909,6 +1054,8 @@ function BSCMusicPlayer() {
     return 6 + (b.util || 0) * 44; // ambient
   };
 
+  const L = I18N[lang];
+
   return (
     <div style={{
       background: BG, minHeight: "100vh", color: "#c8d8f0",
@@ -918,19 +1065,42 @@ function BSCMusicPlayer() {
     }}>
 
       {/* ══ Header ══ */}
-      <div style={{ textAlign: "center", marginBottom: 18 }}>
+      <div style={{ position: "relative", textAlign: "center", marginBottom: 18 }}>
+        <div style={{
+          position: "absolute", top: 0, right: 0,
+          display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap",
+          justifyContent: "flex-end",
+        }}>
+          <span style={{ fontSize: 9, color: "#5a8aaa", letterSpacing: 1 }}>{L.langLabel}</span>
+          {["zh", "en"].map(code => (
+            <button
+              key={code}
+              type="button"
+              onClick={() => setLang(code)}
+              style={{
+                background: lang === code ? "#0d2040" : "transparent",
+                border: `1px solid ${lang === code ? "#00d4ff" : "#5285a5"}`,
+                borderRadius: 6, padding: "4px 10px", cursor: "pointer",
+                color: lang === code ? "#00d4ff" : "#6090b0", fontSize: 11,
+                fontFamily: "inherit",
+              }}
+            >
+              {code === "zh" ? "中文" : "EN"}
+            </button>
+          ))}
+        </div>
         <div style={{ fontSize: 9, letterSpacing: 6, color: "#5a8aaa", marginBottom: 4 }}>
-          BNB SMART CHAIN
+          {L.headerChain}
         </div>
         <h1 style={{
           margin: 0, fontSize: 26, letterSpacing: 5, fontWeight: 900,
           background: "linear-gradient(90deg,#00d4ff,#a29bfe,#ff6b6b)",
           WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
         }}>
-          ⬡ CHAIN MUSIC ⬡
+          {L.headerTitle}
         </h1>
         <p style={{ color: "#5a8aaa", margin: "5px 0 0", fontSize: 10, letterSpacing: 2 }}>
-          EVERY BLOCK · A CHORD · 4 TRACKS · LIVE &amp; REPLAY
+          {L.headerTagline}
         </p>
       </div>
 
@@ -958,7 +1128,7 @@ function BSCMusicPlayer() {
             onChange={e => setNrKey(e.target.value)}
             disabled={playing}
             type={showKey ? "text" : "password"}
-            placeholder="NodeReal API Key（留空使用 PublicNode 免费节点）"
+            placeholder={L.nrPlaceholder}
             style={{
               width: "100%", background: "#080e1a",
               border: `1px solid ${nrKey.trim() ? "#1dd1a155" : "#5285a5"}`,
@@ -987,7 +1157,7 @@ function BSCMusicPlayer() {
             </>
           ) : (
             <>
-              <div><span style={{ color: "#5a7aa0" }}>HTTP → </span>公共节点池 ({BSC_HTTP_POOL.length} 个，自动轮换)</div>
+              <div><span style={{ color: "#5a7aa0" }}>HTTP → </span>{fmt(L.nrHttpPool, { n: BSC_HTTP_POOL.length })}</div>
               <div><span style={{ color: "#5a7aa0" }}>WS → </span>bsc-rpc.publicnode.com</div>
             </>
           )}
@@ -996,14 +1166,17 @@ function BSCMusicPlayer() {
         {/* Get API key link hint */}
         {!nrKey.trim() && (
           <div style={{ fontSize: 9, color: "#5285a5", flexShrink: 0 }}>
-            🔗 nodereal.io 免费申请<br/>获得稳定专属节点
+            🔗 {L.nrHint}
           </div>
         )}
       </div>
 
       {/* ══ Mode Selector ══ */}
       <div style={{ display: "flex", gap: 8, marginBottom: 14, justifyContent: "center" }}>
-        {[["live", "🔴 实时监听"], ["replay", "⏮ 历史回放"]].map(([m, l]) => (
+        {[
+          ["live", `🔴 ${L.modeLive}`],
+          ["replay", `⏮ ${L.modeReplay}`],
+        ].map(([m, lbl]) => (
           <button key={m}
             onClick={() => { if (!playing) { setMode(m); setBlocks([]); setCur(null); } }}
             style={{
@@ -1015,7 +1188,7 @@ function BSCMusicPlayer() {
               fontSize: 13, letterSpacing: 1,
               opacity: playing && mode !== m ? 0.4 : 1,
             }}>
-            {l}
+            {lbl}
           </button>
         ))}
       </div>
@@ -1024,32 +1197,35 @@ function BSCMusicPlayer() {
       {mode === "replay" && (
         <div style={{ ...PANEL, padding: 14, marginBottom: 14 }}>
           <div style={{ fontSize: 9, color: "#5a90b4", letterSpacing: 2, marginBottom: 10 }}>
-            REPLAY CONFIGURATION
+            {L.replayConfig}
           </div>
 
           {/* Preset shortcuts */}
           <div style={{ display: "flex", gap: 6, marginBottom: 10, flexWrap: "wrap", alignItems: "center" }}>
-            <span style={{ fontSize: 10, color: "#5285a5" }}>快捷：</span>
-            {[["2分钟", 2/60], ["5分钟", 5/60], ["15分钟", 15/60], ["30分钟", .5], ["1小时", 1], ["6小时", 6]].map(([l, h]) => (
-              <button key={l} onClick={() => setPreset(h)} disabled={playing}
+            <span style={{ fontSize: 10, color: "#5285a5" }}>{L.shortcuts}：</span>
+            {[
+              ["preset2m", 2/60], ["preset5m", 5/60], ["preset15m", 15/60],
+              ["preset30m", .5], ["preset1h", 1], ["preset6h", 6],
+            ].map(([k, h]) => (
+              <button key={k} onClick={() => setPreset(h)} disabled={playing}
                 style={{
                   background: "transparent", border: "1px solid #1a3050",
                   borderRadius: 5, padding: "3px 10px",
                   cursor: playing ? "not-allowed" : "pointer",
                   color: "#6a95b5", fontSize: 10,
                 }}>
-                {l}
+                {L[k]}
               </button>
             ))}
           </div>
 
           {/* Block range inputs */}
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 10 }}>
-            {[["起始区块", rStart, setRStart], ["结束区块", rEnd, setREnd]].map(([l, v, s]) => (
-              <div key={l} style={{ flex: 1, minWidth: 130 }}>
-                <div style={{ fontSize: 9, color: "#6090b0", marginBottom: 4 }}>{l}</div>
+            {[[L.blockStart, rStart, setRStart], [L.blockEnd, rEnd, setREnd]].map(([lbl, v, s]) => (
+              <div key={lbl} style={{ flex: 1, minWidth: 130 }}>
+                <div style={{ fontSize: 9, color: "#6090b0", marginBottom: 4 }}>{lbl}</div>
                 <input value={v} onChange={e => s(e.target.value)} disabled={playing}
-                  placeholder="区块号..."
+                  placeholder={L.blockPlaceholder}
                   style={{
                     width: "100%", background: "#080e1a",
                     border: "1px solid #1a3050", borderRadius: 6,
@@ -1059,7 +1235,7 @@ function BSCMusicPlayer() {
               </div>
             ))}
             <div style={{ minWidth: 100 }}>
-              <div style={{ fontSize: 9, color: "#6090b0", marginBottom: 4 }}>回放速度</div>
+              <div style={{ fontSize: 9, color: "#6090b0", marginBottom: 4 }}>{L.replaySpeed}</div>
               <select value={rSpeed}
                 onChange={e => {
                   const s = +e.target.value;
@@ -1073,13 +1249,13 @@ function BSCMusicPlayer() {
                   color: "#a0c0e0", fontSize: 12, width: "100%",
                   opacity: playing && !transportPaused ? 0.4 : 1,
                 }}>
-                {[1, 2, 4, 8, 16, 32].map(x => <option key={x} value={x}>{x}x 速</option>)}
+                {[1, 2, 4, 8, 16, 32].map(x => <option key={x} value={x}>{x}{L.speedSuffix}</option>)}
               </select>
             </div>
 
             {/* Loop toggle */}
             <div style={{ minWidth: 60, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
-              <div style={{ fontSize: 9, color: "#6090b0", marginBottom: 4 }}>模式</div>
+              <div style={{ fontSize: 9, color: "#6090b0", marginBottom: 4 }}>{L.loopModeLabel}</div>
               <button onClick={() => setLoopReplay(l => !l)} disabled={playing}
                 style={{
                   background: loopReplay ? "#0a0a20" : "transparent",
@@ -1088,14 +1264,14 @@ function BSCMusicPlayer() {
                   cursor: playing ? "not-allowed" : "pointer",
                   color: loopReplay ? "#a29bfe" : "#6090b0", fontSize: 11,
                 }}>
-                {loopReplay ? "🔁 循环" : "▶ 单次"}
+                {loopReplay ? `🔁 ${L.patternLoop}` : `▶ ${L.patternOnce}`}
               </button>
             </div>
 
             {/* Pause / Resume — visible while playing */}
             {playing && rProg?.phase === "playing" && (
               <div style={{ minWidth: 60, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
-                <div style={{ fontSize: 9, color: "#6090b0", marginBottom: 4 }}>控制</div>
+                <div style={{ fontSize: 9, color: "#6090b0", marginBottom: 4 }}>{L.control}</div>
                 <button onClick={transportPaused ? resumeReplay : pauseReplay}
                   style={{
                     background: transportPaused ? "#0a1a0a" : "#0a0a1a",
@@ -1103,7 +1279,7 @@ function BSCMusicPlayer() {
                     borderRadius: 6, padding: "7px 10px", cursor: "pointer",
                     color: transportPaused ? "#1dd1a1" : "#ffd700", fontSize: 11,
                   }}>
-                  {transportPaused ? "▶ 继续" : "⏸ 暂停"}
+                  {transportPaused ? `▶ ${L.resume}` : `⏸ ${L.pause}`}
                 </button>
               </div>
             )}
@@ -1112,11 +1288,11 @@ function BSCMusicPlayer() {
           {/* Info row */}
           {latestN && (
             <div style={{ fontSize: 10, color: "#5285a5" }}>
-              最新区块 <span style={{ color: "#7ab0c8" }}>#{latestN.toLocaleString()}</span>
+              {L.latestBlock}{" "}
+              <span style={{ color: "#7ab0c8" }}>#{latestN.toLocaleString()}</span>
               {rStart && rEnd && parseInt(rEnd) > parseInt(rStart) && (
-                <> · 共 <span style={{ color: "#00d4ff" }}>
-                  {(parseInt(rEnd) - parseInt(rStart)).toLocaleString()}
-                </span> 个区块 (~{((parseInt(rEnd) - parseInt(rStart)) / BPH).toFixed(1)}h)</>
+                <> · {fmt(L.blocksTotal, { n: (parseInt(rEnd) - parseInt(rStart)).toLocaleString() })}{" "}
+                ({fmt(L.hoursApprox, { h: ((parseInt(rEnd) - parseInt(rStart)) / BPH).toFixed(1) })})</>
               )}
             </div>
           )}
@@ -1138,15 +1314,15 @@ function BSCMusicPlayer() {
                        : rProg.phase === "processing" ? "#ffd700"
                        : "#a29bfe",
                 }}>
-                  {rProg.phase === "fetching"    ? "⬇ 正在下载区块…"
-                 : rProg.phase === "processing"  ? "⚙ 正在处理音符…"
-                 :                                 "▶ 正在播放"}
+                  {rProg.phase === "fetching"    ? `⬇ ${L.phaseFetching}`
+                 : rProg.phase === "processing"  ? `⚙ ${L.phaseProcessing}`
+                 :                                 `▶ ${L.phasePlaying}`}
                 </span>
                 <span style={{ fontSize: 9, color: "#6090b0" }}>
                   {rProg.cur.toLocaleString()} / {rProg.total.toLocaleString()}
                   {" "}({Math.round(rProg.cur / rProg.total * 100)}%)
-                  {rProg.phase === "playing" && loopReplay && <span style={{ color: "#a29bfe" }}> · 🔁</span>}
-                  {rProg.phase === "playing" && transportPaused && <span style={{ color: "#ffd700" }}> · ⏸</span>}
+                  {rProg.phase === "playing" && loopReplay && <span style={{ color: "#a29bfe" }}> · 🔁 {L.sessionLooping}</span>}
+                  {rProg.phase === "playing" && transportPaused && <span style={{ color: "#ffd700" }}> · ⏸ {L.sessionPaused}</span>}
                 </span>
               </div>
               {/* Progress track */}
@@ -1178,16 +1354,16 @@ function BSCMusicPlayer() {
             {/* Track label */}
             <div style={{ width: 80, flexShrink: 0 }}>
               <div style={{ fontSize: 9, color: mute[track.id] ? "#1a2535" : track.color, letterSpacing: .5 }}>
-                {track.emoji} {track.label}
+                {track.emoji} {L.tracks[track.id].label}
               </div>
-              <div style={{ fontSize: 8, color: "#4a6a88" }}>{track.desc}</div>
+              <div style={{ fontSize: 8, color: "#4a6a88" }}>{L.tracks[track.id].desc}</div>
             </div>
 
             {/* Note bars */}
             <div style={{ flex: 1, display: "flex", alignItems: "flex-end", gap: 2, overflow: "hidden" }}>
               {blocks.length === 0 ? (
                 <div style={{ color: "#4a6a88", fontSize: 10, paddingBottom: 6, paddingLeft: 4 }}>
-                  — waiting for blocks —
+                  {L.waitingBlocks}
                 </div>
               ) : blocks.map((b, i) => {
                 const isLast = i === blocks.length - 1;
@@ -1211,25 +1387,25 @@ function BSCMusicPlayer() {
       {/* ══ Stats Strip ══ */}
       <div style={{ display: "flex", gap: 6, marginBottom: 12, flexWrap: "wrap" }}>
         {[
-          { l: "区块",     v: cur ? `#${cur.blockN.toLocaleString()}` : "—",           c: "#4a7090" },
-          { l: "TX",       v: cur ? cur.cats.total   : "—",                             c: "#c8d8f0" },
-          { l: "Transfer", v: cur ? cur.cats.transfers: "—",                            c: "#00d4ff" },
-          { l: "DeFi",     v: cur ? cur.cats.defi    : "—",                             c: "#ffd700" },
-          { l: "Deploy",   v: cur ? cur.cats.deploys : "—",                             c: "#ff6b6b" },
-          { l: "Gas%",     v: cur ? `${Math.round((cur.util || 0) * 100)}%` : "—",     c: "#1dd1a1" },
-          { l: "BPM",      v: bpm,                                                      c: "#a29bfe" },
+          { l: L.statBlock,   v: cur ? `#${cur.blockN.toLocaleString()}` : "—",           c: "#4a7090" },
+          { l: L.statTx,      v: cur ? cur.cats.total   : "—",                             c: "#c8d8f0" },
+          { l: L.statTransfer,v: cur ? cur.cats.transfers: "—",                            c: "#00d4ff" },
+          { l: L.statDefi,    v: cur ? cur.cats.defi    : "—",                             c: "#ffd700" },
+          { l: L.statDeploy,  v: cur ? cur.cats.deploys : "—",                             c: "#ff6b6b" },
+          { l: L.statGas,     v: cur ? `${Math.round((cur.util || 0) * 100)}%` : "—",     c: "#1dd1a1" },
+          { l: L.statBpm,     v: bpm,                                                      c: "#a29bfe" },
           {
-            l: "连接",
+            l: L.statConn,
             v: mode === "live"
               ? (wsState === "live"
-                  ? `${provider} WS ●`
+                  ? fmt(L.connWs, { p: provider })
                   : wsState === "polling"
-                  ? `${provider} Poll ●`
+                  ? fmt(L.connPoll, { p: provider })
                   : wsState === "connecting" ? "…" : "—")
-              : (rProg?.phase === "fetching"   ? "⬇ 下载"
-               : rProg?.phase === "processing" ? "⚙ 处理"
-               : rProg?.phase === "playing"    ? "▶ 播放"
-               : rProg ? "✓ 完成" : "—"),
+              : (rProg?.phase === "fetching"   ? `⬇ ${L.connDownload}`
+               : rProg?.phase === "processing" ? `⚙ ${L.connProcess}`
+               : rProg?.phase === "playing"    ? `▶ ${L.connPlay}`
+               : rProg ? `✓ ${L.connDone}` : "—"),
             c: wsState === "live" ? "#1dd1a1" : wsState === "polling" ? "#ffd700" : "#6090b0",
           },
         ].map(s => (
@@ -1246,7 +1422,7 @@ function BSCMusicPlayer() {
       {/* ══ Track Mixer ══ */}
       <div style={{ ...PANEL, padding: "12px 14px", marginBottom: 12 }}>
         <div style={{ fontSize: 9, color: "#5285a5", letterSpacing: 2, marginBottom: 10 }}>
-          TRACK MIXER
+          {L.mixer}
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 10 }}>
           {TRACKS.map(t => (
@@ -1255,7 +1431,7 @@ function BSCMusicPlayer() {
                 fontSize: 10, marginBottom: 5,
                 color: mute[t.id] ? "#1a2535" : t.color,
               }}>
-                {t.emoji} {t.label}
+                {t.emoji} {L.tracks[t.id].label}
               </div>
               <input
                 type="range" min={0} max={1} step={.05}
@@ -1293,12 +1469,12 @@ function BSCMusicPlayer() {
           cursor: "pointer", letterSpacing: 3,
           boxShadow: playing ? "0 0 18px #c0392b55" : "0 0 18px #00d4ff55",
         }}>
-          {playing ? "⏹  STOP" : "▶  PLAY"}
+          {playing ? `⏹  ${L.stop}` : `▶  ${L.play}`}
         </button>
 
         {/* Scale selector — 2 rows for 8 scales */}
         <div style={{ display: "flex", flexWrap: "wrap", gap: 5, maxWidth: 370 }}>
-          {Object.entries(SCALES).map(([k, v]) => (
+          {Object.keys(SCALES).map(k => (
             <button key={k} onClick={() => setScale(k)} style={{
               background: scale === k ? "#0d2040" : "transparent",
               border: `1px solid ${scale === k ? "#00d4ff" : "#5285a5"}`,
@@ -1306,14 +1482,14 @@ function BSCMusicPlayer() {
               color: scale === k ? "#00d4ff" : "#5a85a5", fontSize: 10,
               letterSpacing: .5,
             }}>
-              {v.label}
+              {L.scales[k]}
             </button>
           ))}
         </div>
 
         {/* Note throttle — BSC 450ms blocks need throttling */}
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <span style={{ fontSize: 10, color: "#6090b0" }}>节奏</span>
+          <span style={{ fontSize: 10, color: "#6090b0" }}>{L.rhythm}</span>
           {[1, 2, 4, 8, 16].map(n => (
             <button key={n} onClick={() => setNoteEvery(n)} style={{
               background: noteEvery === n ? "#0d2040" : "transparent",
@@ -1321,11 +1497,11 @@ function BSCMusicPlayer() {
               borderRadius: 7, padding: "7px 10px", cursor: "pointer",
               color: noteEvery === n ? "#a29bfe" : "#5a85a5", fontSize: 11,
             }}>
-              {n === 1 ? "每块" : `每${n}块`}
+              {n === 1 ? L.everyBlock : fmt(L.everyNBlocks, { n })}
             </button>
           ))}
           <span style={{ fontSize: 9, color: "#5285a5" }}>
-            ≈ {(BLOCK_MS * noteEvery / 1000).toFixed(2)}s/音
+            ≈ {(BLOCK_MS * noteEvery / 1000).toFixed(2)}{L.secPerNote}
           </span>
         </div>
       </div>
@@ -1333,10 +1509,10 @@ function BSCMusicPlayer() {
       {/* ══ Session Stats ══ */}
       {stats.n > 0 && (
         <div style={{ fontSize: 11, color: "#5285a5", borderTop: "1px solid #08111a", paddingTop: 10 }}>
-          已播 <span style={{ color: "#00d4ff" }}>{stats.n}</span> 区块 ·{" "}
-          TX <span style={{ color: "#c8d8f0" }}>{stats.tx.toLocaleString()}</span> ·{" "}
-          DeFi <span style={{ color: "#ffd700" }}>{stats.defi.toLocaleString()}</span> ·{" "}
-          部署 <span style={{ color: "#ff6b6b" }}>{stats.dep}</span>
+          {fmt(L.sessionPlayed, { n: stats.n })} ·{" "}
+          {L.sessionTx} <span style={{ color: "#c8d8f0" }}>{stats.tx.toLocaleString()}</span> ·{" "}
+          {L.sessionDefi} <span style={{ color: "#ffd700" }}>{stats.defi.toLocaleString()}</span> ·{" "}
+          {L.sessionDeploy} <span style={{ color: "#ff6b6b" }}>{stats.dep}</span>
         </div>
       )}
 
@@ -1346,24 +1522,24 @@ function BSCMusicPlayer() {
       {mode === "live" && !playing && liveBlockCount > 0 && (
         <div style={{ ...PANEL, padding: "12px 14px", marginTop: 12 }}>
           <div style={{ fontSize: 9, color: "#5a90b4", letterSpacing: 2, marginBottom: 10 }}>
-            SESSION REPLAY
+            {L.sessionReplay}
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
             {/* Block count badge */}
             <div style={{ fontSize: 11, color: "#7ab0c8", flexShrink: 0 }}>
-              🎙 已录制{" "}
+              🎙 {L.sessionRecorded}{" "}
               <span style={{ color: "#00d4ff", fontWeight: "bold" }}>
                 {liveBlockCount.toLocaleString()}
               </span>{" "}
-              区块
+              {L.sessionBlocks}
               <span style={{ color: "#5285a5" }}>
-                {" "}(≈{(liveBlockCount * BLOCK_MS / 1000 / 60).toFixed(1)} 分钟)
+                {" "}({fmt(L.sessionMinutes, { m: (liveBlockCount * BLOCK_MS / 1000 / 60).toFixed(1) })})
               </span>
             </div>
 
             {/* Speed selector */}
             <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
-              <span style={{ fontSize: 10, color: "#6090b0" }}>速度</span>
+              <span style={{ fontSize: 10, color: "#6090b0" }}>{L.sessionSpeed}</span>
               {[1, 2, 4, 8, 16, 32].map(s => (
                 <button key={s}
                   onClick={() => {
@@ -1394,7 +1570,7 @@ function BSCMusicPlayer() {
                 cursor: liveReplayPlaying ? "default" : "pointer",
                 color: loopReplay ? "#a29bfe" : "#6090b0", fontSize: 10, flexShrink: 0,
               }}>
-              {loopReplay ? "🔁 循环" : "▶ 单次"}
+              {loopReplay ? `🔁 ${L.patternLoop}` : `▶ ${L.patternOnce}`}
             </button>
 
             {/* Pause / Resume — only while replaying */}
@@ -1407,7 +1583,7 @@ function BSCMusicPlayer() {
                   color: transportPaused ? "#1dd1a1" : "#ffd700", fontSize: 11,
                   fontWeight: "bold", flexShrink: 0,
                 }}>
-                {transportPaused ? "▶ 继续" : "⏸ 暂停"}
+                {transportPaused ? `▶ ${L.resume}` : `⏸ ${L.pause}`}
               </button>
             )}
 
@@ -1423,7 +1599,7 @@ function BSCMusicPlayer() {
                 cursor: "pointer", letterSpacing: 1, flexShrink: 0,
                 boxShadow: liveReplayPlaying ? "0 0 14px #c0392b55" : "0 0 14px #a29bfe55",
               }}>
-              {liveReplayPlaying ? "⏹ 停止" : "⏮ 回放本次"}
+              {liveReplayPlaying ? `⏹ ${L.stop}` : `⏮ ${L.sessionReplayThis}`}
             </button>
           </div>
 
@@ -1433,8 +1609,8 @@ function BSCMusicPlayer() {
               <div style={{ fontSize: 9, color: "#6090b0", marginBottom: 3 }}>
                 {lrProg.cur.toLocaleString()} / {lrProg.total.toLocaleString()}
                 {" "}({Math.round(lrProg.cur / lrProg.total * 100)}%)
-                {loopReplay && <span style={{ color: "#a29bfe" }}> · 🔁 循环中</span>}
-                {transportPaused && <span style={{ color: "#ffd700" }}> · ⏸ 已暂停</span>}
+                {loopReplay && <span style={{ color: "#a29bfe" }}> · 🔁 {L.sessionLooping}</span>}
+                {transportPaused && <span style={{ color: "#ffd700" }}> · ⏸ {L.sessionPaused}</span>}
               </div>
               <div style={{ height: 3, background: "#0e2030", borderRadius: 2, overflow: "hidden" }}>
                 <div style={{
@@ -1456,12 +1632,12 @@ function BSCMusicPlayer() {
         marginTop: 20, fontSize: 10, color: "#3a5a78", lineHeight: 2.2,
         borderTop: "1px solid #080e18", paddingTop: 12,
       }}>
-        <div style={{ color: "#5285a5", letterSpacing: 2, marginBottom: 2 }}>MAPPING RULES</div>
-        <div>💸 Transfer 数 → 旋律音高 (Triangle)  ·  🔮 DeFi 调用数 → 和声 (Sawtooth)</div>
-        <div>🚀 合约部署数 → 金属打击 (Metal Synth)  ·  🌊 Gas 利用率 → 环境声 (Sine Pad)</div>
-        <div>🥁 TX总数 → 底鼓节拍 (Membrane Synth)：交易越多，底鼓越重越低沉</div>
-        <div>🎵 声部引导：音符每次最多移动2阶，DeFi轨自动跟随Transfer三度音程</div>
-        <div>🎛 BPM 自动适应出块速度  ·  📡 WSS 实时 + 轮询兜底  ·  ⏮ 历史回放预加载 3阶段</div>
+        <div style={{ color: "#5285a5", letterSpacing: 2, marginBottom: 2 }}>{L.legendTitle}</div>
+        <div>{L.legendL1}</div>
+        <div>{L.legendL2}</div>
+        <div>{L.legendL3}</div>
+        <div>{L.legendL4}</div>
+        <div>{L.legendL5}</div>
       </div>
     </div>
   );
