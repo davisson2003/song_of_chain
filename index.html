@@ -3,16 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>⬡ BSC Chain Music</title>
+  <title>⬡ SONG OF BNBCHAIN</title>
   <script>
     try {
       var _l = localStorage.getItem("song-of-chain-lang");
       if (_l === "en") {
         document.documentElement.lang = "en";
-        document.title = "⬡ BSC Chain Music";
+        document.title = "⬡ SONG OF BNBCHAIN";
       } else {
         document.documentElement.lang = "zh-Hans";
-        document.title = "⬡ BSC 链上音乐";
+        document.title = "⬡ BNBCHAIN 之歌";
       }
     } catch (e) {}
   </script>
@@ -96,9 +96,9 @@ const TRACKS = [
 /* ── i18n: UI copy (zh / en) ── */
 const I18N = {
   zh: {
-    docTitle: "⬡ BSC 链上音乐",
+    docTitle: "⬡ BNBCHAIN 之歌",
     headerChain: "BNB SMART CHAIN",
-    headerTitle: "⬡ CHAIN MUSIC ⬡",
+    headerTitle: "⬡ BNBCHAIN 之歌 ⬡",
     headerTagline: "每个区块 · 一组和声 · 多轨 · 实时与回放",
     langLabel: "语言",
     scales: {
@@ -147,9 +147,9 @@ const I18N = {
     errAllNodes: "所有节点请求失败 — {detail}",
   },
   en: {
-    docTitle: "⬡ BSC Chain Music",
+    docTitle: "⬡ SONG OF BNBCHAIN",
     headerChain: "BNB SMART CHAIN",
-    headerTitle: "⬡ CHAIN MUSIC ⬡",
+    headerTitle: "⬡ SONG OF BNBCHAIN ⬡",
     headerTagline: "EVERY BLOCK · A CHORD · MULTI-TRACK · LIVE & REPLAY",
     langLabel: "Language",
     scales: {
@@ -1065,7 +1065,46 @@ function BSCMusicPlayer() {
     }}>
 
       {/* ══ Header ══ */}
-      <div style={{ position: "relative", textAlign: "center", marginBottom: 18 }}>
+      <div style={{ position: "relative", textAlign: "center", marginBottom: 18, paddingTop: 30 }}>
+        {/* BNBCHAIN logomark — path from Simple Icons (CC0); brand yellow #F0B90B */}
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
+          <a
+            href="https://www.bnbchain.org/"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="BNBCHAIN"
+            style={{
+              display: "inline-flex",
+              lineHeight: 0,
+              borderRadius: 12,
+              transition: "transform .2s ease, filter .2s ease",
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.transform = "scale(1.05)";
+              e.currentTarget.style.filter = "drop-shadow(0 0 18px rgba(240,185,11,0.55))";
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.transform = "scale(1)";
+              e.currentTarget.style.filter = "none";
+            }}
+          >
+            <svg
+              role="img"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+              style={{
+                width: 56,
+                height: 56,
+                filter: "drop-shadow(0 0 14px rgba(240,185,11,0.4))",
+              }}
+            >
+              <path
+                fill="#F0B90B"
+                d="M5.631 3.676 12.001 0l6.367 3.676-2.34 1.358L12 2.716 7.972 5.034l-2.34-1.358Zm12.737 4.636-2.34-1.358L12 9.272 7.972 6.954l-2.34 1.358v2.716l4.026 2.318v4.636L12 19.341l2.341-1.359v-4.636l4.027-2.318V8.312Zm0 7.352v-2.716l-2.34 1.358v2.716l2.34-1.358Zm1.663.96-4.027 2.318v2.717l6.368-3.677V10.63l-2.34 1.358v4.636Zm-2.34-10.63 2.34 1.358v2.716l2.341-1.358V5.994l-2.34-1.358-2.342 1.358ZM9.657 19.926v2.716L12 24l2.341-1.358v-2.716l-2.34 1.358-2.343-1.358Zm-4.027-4.262 2.341 1.358v-2.716l-2.34-1.358v2.716Zm4.027-9.67L12 7.352l2.341-1.358-2.34-1.358-2.343 1.358Zm-5.69 1.358L6.31 5.994 3.968 4.636l-2.34 1.358V8.71l2.34 1.358V7.352Zm0 4.636-2.34-1.358v7.352l6.368 3.677v-2.717l-4.028-2.318v-4.636Z"
+              />
+            </svg>
+          </a>
+        </div>
         <div style={{
           position: "absolute", top: 0, right: 0,
           display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap",
