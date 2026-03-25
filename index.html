@@ -204,6 +204,21 @@ function fmt(str, vars) {
   return str.replace(/\{(\w+)\}/g, (_, k) => (vars[k] != null ? String(vars[k]) : `{${k}}`));
 }
 
+/**
+ * Must run synchronously inside a click/touch handler (same call stack as user gesture).
+ * iOS Safari / Android Chrome block AudioContext until then; async WebSocket callbacks are too late.
+ */
+function unlockAudioFromGesture() {
+  try {
+    const p = Tone.start();
+    const ctx = Tone.context;
+    if (ctx && ctx.state !== "running") void ctx.resume();
+    return p;
+  } catch (_) {
+    return Promise.resolve();
+  }
+}
+
 const BPH        = 8000;  // BSC ~450ms/block → ~8000 blocks/hour
 const BLOCK_MS   = 450;   // expected ms between blocks (for poll interval)
 
@@ -451,6 +466,19 @@ function BSCMusicPlayer() {
   useEffect(() => { nrKeyR.current  = nrKey; }, [nrKey]);
   useEffect(() => { langRef.current = lang; }, [lang]);
 
+  // Resume AudioContext when returning from background (mobile often suspends it)
+  useEffect(() => {
+    const onVis = () => {
+      if (document.visibilityState !== "visible") return;
+      try {
+        if (playR.current && Tone.context && Tone.context.state === "suspended")
+          void Tone.context.resume();
+      } catch (_) {}
+    };
+    document.addEventListener("visibilitychange", onVis);
+    return () => document.removeEventListener("visibilitychange", onVis);
+  }, []);
+
   useEffect(() => {
     try { localStorage.setItem("song-of-chain-lang", lang); } catch (_) {}
     document.documentElement.lang = lang === "zh" ? "zh-Hans" : "en";
@@ -561,6 +589,9 @@ function BSCMusicPlayer() {
   const playNotes = useCallback(async notes => {
     if (!audioRef.current) return;
     await Tone.start();
+    try {
+      if (Tone.context.state !== "running") await Tone.context.resume();
+    } catch (_) {}
     const { S } = audioRef.current;
     const m = muteR.current;
     const now = Tone.now();
@@ -903,6 +934,7 @@ function BSCMusicPlayer() {
   }, []);
 
   const resumeReplay = useCallback(() => {
+    unlockAudioFromGesture();
     try { Tone.Transport.start(); } catch (_) {}
     setTransportPaused(false);
   }, []);
@@ -1499,7 +1531,13 @@ function BSCMusicPlayer() {
 
       {/* ══ Controls ══ */}
       <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap", marginBottom: 12 }}>
-        <button onClick={() => setPlaying(p => !p)} style={{
+        <button
+          type="button"
+          onClick={() => {
+            if (!playing) unlockAudioFromGesture();
+            setPlaying(p => !p);
+          }}
+          style={{
           background: playing
             ? "linear-gradient(135deg,#c0392b,#922b21)"
             : "linear-gradient(135deg,#00d4ff,#007a99)",
@@ -1507,7 +1545,9 @@ function BSCMusicPlayer() {
           color: "#fff", fontSize: 14, fontWeight: "bold",
           cursor: "pointer", letterSpacing: 3,
           boxShadow: playing ? "0 0 18px #c0392b55" : "0 0 18px #00d4ff55",
-        }}>
+          touchAction: "manipulation",
+        }}
+        >
           {playing ? `⏹  ${L.stop}` : `▶  ${L.play}`}
         </button>
 
@@ -1628,7 +1668,14 @@ function BSCMusicPlayer() {
 
             {/* Play / Stop button */}
             <button
-              onClick={liveReplayPlaying ? stopLiveReplay : startLiveReplay}
+              type="button"
+              onClick={() => {
+                if (liveReplayPlaying) stopLiveReplay();
+                else {
+                  unlockAudioFromGesture();
+                  startLiveReplay();
+                }
+              }}
               style={{
                 background: liveReplayPlaying
                   ? "linear-gradient(135deg,#c0392b,#922b21)"
