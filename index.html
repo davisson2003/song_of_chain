@@ -34,7 +34,7 @@
   <div id="root"></div>
   <script type="text/babel" data-type="module">
 
-const { useState, useEffect, useRef, useCallback } = React;
+const { useState, useEffect, useRef, useCallback, useMemo } = React;
 const Tone = window.Tone;
 
 /* ═══════════════════════════════════════════════
@@ -145,6 +145,17 @@ const I18N = {
     errInvalidRange: "请输入有效区块范围（起始 < 结束）",
     errPoll: "轮询失败：{msg}",
     errAllNodes: "所有节点请求失败 — {detail}",
+    soloTitle: "地址独奏",
+    soloPlaceholder: "0x… 留空为全链统计",
+    soloHint: "仅包含该地址作为发送方或接收方的交易",
+    soloInvalid: "地址无效（需 0x + 40 位十六进制）",
+    soloActive: "独奏中",
+    particlesLabel: "粒子背景",
+    particlesOn: "开",
+    particlesOff: "关",
+    statSolo: "独奏地址",
+    legendL6: "🎯 地址独奏：只把该钱包相关的交易映射成声音；本块无交易时几乎静音",
+    legendL7: "✨ 粒子场：新区块会迸发粒子，Gas 与交易量影响颜色与速度（伪 3D）",
   },
   en: {
     docTitle: "⬡ SONG OF BNBCHAIN",
@@ -196,6 +207,17 @@ const I18N = {
     errInvalidRange: "Enter a valid range (start < end)",
     errPoll: "Poll failed: {msg}",
     errAllNodes: "All nodes failed — {detail}",
+    soloTitle: "ADDRESS SOLO",
+    soloPlaceholder: "0x… empty = full chain",
+    soloHint: "Only txs where this address is from or to",
+    soloInvalid: "Invalid address (expect 0x + 40 hex chars)",
+    soloActive: "Solo",
+    particlesLabel: "Particle field",
+    particlesOn: "On",
+    particlesOff: "Off",
+    statSolo: "Solo addr",
+    legendL6: "🎯 Address solo: map only txs touching this wallet; near-silent when the block has none",
+    legendL7: "✨ Particles: each new block spawns a burst; gas & tx count drive hue & speed (pseudo-3D)",
   },
 };
 
@@ -323,6 +345,30 @@ function categorize(block) {
   return { transfers, defi, deploys, total: transfers + defi + deploys };
 }
 
+function normAddr(s) {
+  if (!s || typeof s !== "string") return "";
+  const t = s.trim().toLowerCase();
+  return /^0x[0-9a-f]{40}$/.test(t) ? t : "";
+}
+
+function categorizeForAddress(block, addrNorm) {
+  let transfers = 0, defi = 0, deploys = 0;
+  for (const tx of block.transactions || []) {
+    const from = (tx.from || "").toLowerCase();
+    const to = (tx.to || "").toLowerCase();
+    const involved = from === addrNorm || (to && to === addrNorm);
+    if (!involved) continue;
+    if (!tx.to) deploys++;
+    else if (tx.input && tx.input !== "0x") defi++;
+    else transfers++;
+  }
+  return { transfers, defi, deploys, total: transfers + defi + deploys };
+}
+
+function pickCats(block, addrNorm) {
+  return addrNorm ? categorizeForAddress(block, addrNorm) : categorize(block);
+}
+
 /* ── Voice-leading state (module-level, reset on each playback session) ──
    Tracks last scale index per track so notes move smoothly, ≤2 steps at a time. */
 const _vl = {};
@@ -342,7 +388,12 @@ function vlIdx(count, max, scale, trackId) {
 }
 
 // Map block data → musical notes for all tracks
-function toNotes(cats, block, scaleName) {
+// opts.solo: address-solo mode — only address-related txs count; empty block → near-silent (soloEmpty)
+function toNotes(cats, block, scaleName, opts) {
+  opts = opts || {};
+  const solo = !!opts.solo;
+  const soloEmpty = solo && cats.total === 0;
+
   const gasUsed  = h2n(block.gasUsed);
   const gasLimit = h2n(block.gasLimit);
   const blockNum = h2n(block.number);
@@ -370,16 +421,128 @@ function toNotes(cats, block, scaleName) {
   const txPitch = 60 - Math.round(txNorm * 40);   // 60Hz (light) → 20Hz (heavy)
   const txDecay = 0.1 + txNorm * 0.35;
 
+  const ambVel = soloEmpty ? util * 0.07 : util * 0.3;
+
   return {
     transfer: { note: `${tN}${oct}`,               dur: cats.transfers > 100 ? "8n" : "4n", vel,          color: ncolor(tN) },
     defi:     { note: `${dN}${oct}`,               dur: cats.defi > 60 ? "8n" : "4n",       vel: vel*.85, color: ncolor(dN) },
     deploy:   { note: `${pN}${Math.min(oct+1,6)}`, dur: "16n", vel: Math.min(cats.deploys * .15 + .05, 1), color: ncolor(pN) },
-    ambient:  { note: `${tN}3`,                    dur: "1n",  vel: util * .3,                color: ncolor(tN) },
+    ambient:  { note: `${tN}3`,                    dur: "1n",  vel: ambVel,                     color: ncolor(tN) },
     txbeat:   { vel: txVel, pitch: txPitch, decay: txDecay, color: "#ff9f43" },
     isDown:  blockNum % 8 === 0,
     isMid:   blockNum % 4 === 0 && blockNum % 8 !== 0,
     util, blockNum, cats,
+    solo, soloEmpty,
   };
+}
+
+/* ── Full-screen particle field (pseudo-3D); driven by latest block stats ── */
+function ParticleField({ enabled, playing, cur }) {
+  const canvasRef = useRef(null);
+  const partsRef = useRef([]);
+  const curRef = useRef(cur);
+  const lastBn = useRef(null);
+  const mouseRef = useRef({ x: 0.5, y: 0.5 });
+
+  useEffect(() => { curRef.current = cur; }, [cur]);
+
+  useEffect(() => {
+    const onMove = e => {
+      const t = e.touches ? e.touches[0] : e;
+      if (!t) return;
+      mouseRef.current.x = t.clientX / Math.max(window.innerWidth, 1);
+      mouseRef.current.y = t.clientY / Math.max(window.innerHeight, 1);
+    };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("touchmove", onMove, { passive: true });
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("touchmove", onMove);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!enabled) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    let raf;
+    const resize = () => {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const w = window.innerWidth, h = window.innerHeight;
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
+      canvas.style.width = w + "px";
+      canvas.style.height = h + "px";
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+    resize();
+    window.addEventListener("resize", resize);
+
+    const loop = () => {
+      const w = window.innerWidth, h = window.innerHeight;
+      const c = curRef.current;
+      if (playing && c && c.blockN != null && lastBn.current !== c.blockN) {
+        lastBn.current = c.blockN;
+        const tx = c.cats?.total ?? 0;
+        const util = c.util ?? 0;
+        const n = Math.min(8 + Math.floor(tx / 4), 55);
+        for (let i = 0; i < n; i++) {
+          partsRef.current.push({
+            x: Math.random() * w,
+            y: h + 20 + Math.random() * 50,
+            z: Math.random(),
+            vx: (Math.random() - 0.5) * 1.5,
+            vy: -1.3 - Math.random() * 2.2 - util * 0.9,
+            life: 1,
+            hue: 175 + util * 150 + Math.random() * 55,
+          });
+        }
+      }
+      if (!playing) lastBn.current = null;
+
+      ctx.fillStyle = "rgba(4,8,15,0.14)";
+      ctx.fillRect(0, 0, w, h);
+      const mx = mouseRef.current.x * w, my = mouseRef.current.y * h;
+      const parts = partsRef.current;
+      for (let i = parts.length - 1; i >= 0; i--) {
+        const p = parts[i];
+        p.life -= 0.0032;
+        if (p.life <= 0) { parts.splice(i, 1); continue; }
+        p.x += p.vx + (mx - p.x) * 0.00028;
+        p.y += p.vy;
+        const depth = 0.28 + p.z * 0.72;
+        const px = p.x * depth + (1 - depth) * w * 0.5;
+        const py = p.y * depth + (1 - depth) * h * 0.4;
+        const sz = (2 + p.z * 5) * p.life;
+        ctx.beginPath();
+        ctx.arc(px, py, sz, 0, Math.PI * 2);
+        ctx.fillStyle = `hsla(${p.hue}, 72%, 58%, ${p.life * 0.48})`;
+        ctx.fill();
+      }
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", resize);
+    };
+  }, [enabled, playing]);
+
+  if (!enabled) return null;
+
+  return (
+    <canvas
+      ref={canvasRef}
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 0,
+        pointerEvents: "none",
+        opacity: 0.5,
+      }}
+    />
+  );
 }
 
 /* ═══════════════════════════════════════════════
@@ -405,6 +568,12 @@ function BSCMusicPlayer() {
   // NodeReal config
   const [nrKey,    setNrKey]   = useState("");       // NodeReal API key
   const [showKey,  setShowKey] = useState(false);    // toggle key visibility
+
+  // Address solo + particle field
+  const [soloAddressInput, setSoloAddressInput] = useState("");
+  const [particlesEnabled, setParticlesEnabled] = useState(true);
+  const soloAddrNorm = useMemo(() => normAddr(soloAddressInput), [soloAddressInput]);
+  const soloAddrRef = useRef("");
 
   // Note throttle: play 1 note every N blocks (BSC 450ms → every 4 blocks ≈ 1 note/1.8s)
   const [noteEvery, setNoteEvery] = useState(1); // live default: every block
@@ -455,6 +624,9 @@ function BSCMusicPlayer() {
   const nrKeyR    = useRef(nrKey);   // NodeReal key ref (for stable callbacks)
   const btimes    = useRef([]); // for adaptive BPM
   const langRef   = useRef(lang);
+
+  useEffect(() => { soloAddrRef.current = soloAddrNorm; }, [soloAddrNorm]);
+  useEffect(() => { resetVL(); }, [soloAddrNorm]);
 
   // Keep refs in sync
   useEffect(() => { modeR.current  = mode;   }, [mode]);
@@ -595,29 +767,32 @@ function BSCMusicPlayer() {
     const { S } = audioRef.current;
     const m = muteR.current;
     const now = Tone.now();
+    const se = notes.soloEmpty;
 
-    if (!m.transfer)
+    if (!se && !m.transfer)
       S.transfer.triggerAttackRelease(notes.transfer.note, notes.transfer.dur, now, notes.transfer.vel);
 
-    if (!m.defi && notes.cats.defi > 0)
+    if (!se && !m.defi && notes.cats.defi > 0)
       S.defi.triggerAttackRelease(notes.defi.note, notes.defi.dur, now, notes.defi.vel);
 
-    if (!m.deploy && notes.cats.deploys > 0)
+    if (!se && !m.deploy && notes.cats.deploys > 0)
       S.deploy.triggerAttackRelease(notes.deploy.dur, now, notes.deploy.vel);
 
     if (!m.ambient && notes.ambient.vel > 0.02)
       S.ambient.triggerAttackRelease([notes.ambient.note], "2n", now, notes.ambient.vel);
 
     // 🥁 TX Beat kick — pitch & decay driven by total tx count
-    if (!m.txbeat && notes.txbeat.vel > 0) {
+    if (!se && !m.txbeat && notes.txbeat.vel > 0) {
       S.txbeat.set({ pitchDecay: notes.txbeat.decay });
       S.txbeat.triggerAttackRelease(notes.txbeat.pitch, "8n", now, notes.txbeat.vel);
     }
 
     // Bass accent
-    const bassNote = notes.transfer.note.replace(/\d/, "2");
-    if (notes.isDown) S.bass.triggerAttackRelease(bassNote, "2n",  now,       0.5);
-    else if (notes.isMid) S.bass.triggerAttackRelease(bassNote, "4n", now + .05, 0.3);
+    if (!se) {
+      const bassNote = notes.transfer.note.replace(/\d/, "2");
+      if (notes.isDown) S.bass.triggerAttackRelease(bassNote, "2n",  now,       0.5);
+      else if (notes.isMid) S.bass.triggerAttackRelease(bassNote, "4n", now + .05, 0.3);
+    }
   }, []);
 
   /* ── Play notes at a precise AudioContext time (for Transport scheduling) ── */
@@ -625,34 +800,38 @@ function BSCMusicPlayer() {
     if (!audioRef.current) return;
     const { S } = audioRef.current;
     const m = muteR.current;
+    const se = notes.soloEmpty;
 
-    if (!m.transfer)
+    if (!se && !m.transfer)
       S.transfer.triggerAttackRelease(notes.transfer.note, notes.transfer.dur, time, notes.transfer.vel);
 
-    if (!m.defi && (notes.cats?.defi ?? 0) > 0)
+    if (!se && !m.defi && (notes.cats?.defi ?? 0) > 0)
       S.defi.triggerAttackRelease(notes.defi.note, notes.defi.dur, time, notes.defi.vel);
 
-    if (!m.deploy && (notes.cats?.deploys ?? 0) > 0)
+    if (!se && !m.deploy && (notes.cats?.deploys ?? 0) > 0)
       S.deploy.triggerAttackRelease(notes.deploy.dur, time, notes.deploy.vel);
 
     if (!m.ambient && notes.ambient.vel > 0.02)
       S.ambient.triggerAttackRelease([notes.ambient.note], "2n", time, notes.ambient.vel);
 
-    if (!m.txbeat && notes.txbeat.vel > 0) {
+    if (!se && !m.txbeat && notes.txbeat.vel > 0) {
       S.txbeat.set({ pitchDecay: notes.txbeat.decay });
       S.txbeat.triggerAttackRelease(notes.txbeat.pitch, "8n", time, notes.txbeat.vel);
     }
 
-    const bassNote = notes.transfer.note.replace(/\d/, "2");
-    if (notes.isDown) S.bass.triggerAttackRelease(bassNote, "2n",  time,        0.5);
-    else if (notes.isMid) S.bass.triggerAttackRelease(bassNote, "4n", time + 0.05, 0.3);
+    if (!se) {
+      const bassNote = notes.transfer.note.replace(/\d/, "2");
+      if (notes.isDown) S.bass.triggerAttackRelease(bassNote, "2n",  time,        0.5);
+      else if (notes.isMid) S.bass.triggerAttackRelease(bassNote, "4n", time + 0.05, 0.3);
+    }
   }, []);
 
   /* ── Process one fetched block → play + update state ── */
   const proc = useCallback(block => {
-    const cats    = categorize(block);
-    const notes   = toNotes(cats, block, scaleR.current);
-    const blockN  = h2n(block.number);
+    const addrNorm = soloAddrRef.current;
+    const cats     = pickCats(block, addrNorm);
+    const notes    = toNotes(cats, block, scaleR.current, { solo: !!addrNorm });
+    const blockN   = h2n(block.number);
 
     // ── Adaptive BPM from inter-block timing ──
     const ts = Date.now();
@@ -805,8 +984,9 @@ function BSCMusicPlayer() {
     // ── Phase 2: Process + smooth ──────────────────────────────────────
     setRProg({ phase: "processing", cur: 0, total });
     const validBlocks = rawBlocks.filter(Boolean);
+    const addrNorm = soloAddrRef.current;
     const notesList   = validBlocks.map(block => ({
-      ...toNotes(categorize(block), block, scaleR.current),
+      ...toNotes(pickCats(block, addrNorm), block, scaleR.current, { solo: !!addrNorm }),
       _blockN: h2n(block.number),
     }));
     const smoothed = smoothNotes(notesList);
@@ -1087,9 +1267,18 @@ function BSCMusicPlayer() {
   };
 
   const L = I18N[lang];
+  const soloAddrErr = soloAddressInput.trim() && !soloAddrNorm;
 
   return (
+    <>
+    <ParticleField
+      enabled={particlesEnabled}
+      playing={playing || liveReplayPlaying}
+      cur={cur}
+    />
     <div style={{
+      position: "relative",
+      zIndex: 1,
       background: BG, minHeight: "100vh", color: "#c8d8f0",
       fontFamily: "'Courier New', monospace",
       padding: "22px 18px", boxSizing: "border-box",
@@ -1240,6 +1429,57 @@ function BSCMusicPlayer() {
             🔗 {L.nrHint}
           </div>
         )}
+      </div>
+
+      {/* ══ Address solo + particle field ══ */}
+      <div style={{
+        ...PANEL, padding: "12px 14px", marginBottom: 14,
+        display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12,
+      }}>
+        <div style={{ flex: "1 1 220px", minWidth: 0 }}>
+          <div style={{ fontSize: 9, color: "#5a90b4", letterSpacing: 2, marginBottom: 6 }}>
+            🎯 {L.soloTitle}
+          </div>
+          <input
+            value={soloAddressInput}
+            onChange={e => setSoloAddressInput(e.target.value)}
+            disabled={playing}
+            placeholder={L.soloPlaceholder}
+            spellCheck={false}
+            autoCapitalize="none"
+            autoCorrect="off"
+            style={{
+              width: "100%", background: "#080e1a",
+              border: `1px solid ${soloAddrErr ? "#aa4444" : "#1a3050"}`,
+              borderRadius: 6, padding: "8px 10px",
+              color: "#a0c0e0", fontSize: 12, fontFamily: "monospace", boxSizing: "border-box",
+            }}
+          />
+          <div style={{ fontSize: 9, color: "#5285a5", marginTop: 5 }}>
+            {L.soloHint}
+            {soloAddrErr && <span style={{ color: "#ff6b6b", marginLeft: 4 }}>{L.soloInvalid}</span>}
+            {soloAddrNorm && !soloAddrErr && (
+              <span style={{ color: "#1dd1a1", marginLeft: 4 }}>{L.soloActive}</span>
+            )}
+          </div>
+        </div>
+        <div style={{
+          display: "flex", alignItems: "center", gap: 8, flexShrink: 0,
+        }}>
+          <span style={{ fontSize: 10, color: "#6090b0" }}>✨ {L.particlesLabel}</span>
+          <button
+            type="button"
+            onClick={() => setParticlesEnabled(p => !p)}
+            style={{
+              background: particlesEnabled ? "#0a1a20" : "transparent",
+              border: `1px solid ${particlesEnabled ? "#00d4ff" : "#5285a5"}`,
+              borderRadius: 6, padding: "6px 12px", cursor: "pointer",
+              color: particlesEnabled ? "#00d4ff" : "#6090b0", fontSize: 11,
+            }}
+          >
+            {particlesEnabled ? L.particlesOn : L.particlesOff}
+          </button>
+        </div>
       </div>
 
       {/* ══ Mode Selector ══ */}
@@ -1458,6 +1698,7 @@ function BSCMusicPlayer() {
       {/* ══ Stats Strip ══ */}
       <div style={{ display: "flex", gap: 6, marginBottom: 12, flexWrap: "wrap" }}>
         {[
+          { l: L.statSolo,    v: soloAddrNorm ? `${soloAddrNorm.slice(0, 6)}…${soloAddrNorm.slice(-4)}` : "—", c: "#f0b90b" },
           { l: L.statBlock,   v: cur ? `#${cur.blockN.toLocaleString()}` : "—",           c: "#4a7090" },
           { l: L.statTx,      v: cur ? cur.cats.total   : "—",                             c: "#c8d8f0" },
           { l: L.statTransfer,v: cur ? cur.cats.transfers: "—",                            c: "#00d4ff" },
@@ -1534,7 +1775,13 @@ function BSCMusicPlayer() {
         <button
           type="button"
           onClick={() => {
-            if (!playing) unlockAudioFromGesture();
+            if (!playing) {
+              if (soloAddrErr) {
+                setErr(L.soloInvalid);
+                return;
+              }
+              unlockAudioFromGesture();
+            }
             setPlaying(p => !p);
           }}
           style={{
@@ -1724,8 +1971,11 @@ function BSCMusicPlayer() {
         <div>{L.legendL3}</div>
         <div>{L.legendL4}</div>
         <div>{L.legendL5}</div>
+        <div>{L.legendL6}</div>
+        <div>{L.legendL7}</div>
       </div>
     </div>
+    </>
   );
 }
 
